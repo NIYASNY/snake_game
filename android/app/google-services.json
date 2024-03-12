@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "49215298774",
+    "project_id": "gameapp-414f9",
+    "storage_bucket": "gameapp-414f9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:49215298774:android:3749d6bf0f8c3f92093d77",
+        "android_client_info": {
+          "package_name": "com.example.flutter_game_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBN3d__xISc0PJVM8XuvFl5Oa4NKzKcv0w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
