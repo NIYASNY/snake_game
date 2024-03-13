@@ -3,10 +3,10 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_game_app/blank_pixel.dart';
-import 'package:flutter_game_app/foodpixel.dart';
-import 'package:flutter_game_app/highscoretile.dart';
-import 'package:flutter_game_app/snake_pixel.dart';
+import 'package:flutter_game_app/widgets/blank_pixel.dart';
+import 'package:flutter_game_app/widgets/foodpixel.dart';
+import 'package:flutter_game_app/widgets/highscoretile.dart';
+import 'package:flutter_game_app/widgets/snake_pixel.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
