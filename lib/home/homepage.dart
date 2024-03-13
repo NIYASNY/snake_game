@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_game_app/blank_pixel.dart';
 import 'package:flutter_game_app/foodpixel.dart';
+import 'package:flutter_game_app/highscoretile.dart';
 import 'package:flutter_game_app/snake_pixel.dart';
 
 class HomePage extends StatefulWidget {
@@ -28,6 +31,26 @@ class _HomePageState extends State<HomePage> {
 
   int foodposition = 55;
 
+  List<String> highscore_docid = [];
+  late final Future? letsgetdocid;
+
+  @override
+  void initState() {
+    letsgetdocid = getDocid();
+    super.initState();
+  }
+
+  Future getDocid() async {
+    await FirebaseFirestore.instance
+        .collection("highscores")
+        .orderBy("score", descending: true)
+        .limit(10)
+        .get()
+        .then((value) => value.docs.forEach((element) {
+              highscore_docid.add(element.reference.id);
+            }));
+  }
+
   void startgame() {
     gameHasstarted = true;
     Timer.periodic(const Duration(milliseconds: 200), (timer) {
@@ -47,7 +70,8 @@ class _HomePageState extends State<HomePage> {
                       Text("Your score is: " + currentscore.toString()),
                       TextField(
                         controller: _namecontroller,
-                        decoration: const InputDecoration(hintText: 'Enter name'),
+                        decoration:
+                            const InputDecoration(hintText: 'Enter name'),
                       ),
                     ],
                   ),
@@ -69,7 +93,9 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void newGame() {
+  Future newGame() async {
+    highscore_docid = [];
+    await getDocid();
     setState(() {
       snakePosition = [0, 1, 2];
       foodposition = 55;
@@ -79,7 +105,13 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void submitscore() {}
+  void submitscore() {
+    var database = FirebaseFirestore.instance;
+    database.collection('highscores').add({
+      "name": _namecontroller.text,
+      "score": currentscore,
+    });
+  }
 
   void claimFood() {
     currentscore++;
@@ -157,77 +189,111 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SizedBox(
-        width: screenWidth > 428 ? 428 : screenWidth,
-        child: Column(
-          children: [
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Current Score'),
-                      Text(
-                        currentscore.toString(),
-                        style: TextStyle(fontSize: 36),
+      body: RawKeyboardListener(
+        focusNode: FocusNode(),
+        autofocus: true,
+        onKey: (event) {
+          if (event.isKeyPressed(LogicalKeyboardKey.arrowDown) && currentDirection != snake_Direction.UP) {
+            currentDirection = snake_Direction.DOWN;
+          } else if (event.isKeyPressed(LogicalKeyboardKey.arrowUp)&& currentDirection != snake_Direction.DOWN) {
+            currentDirection = snake_Direction.UP;
+          } else if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft)&& currentDirection != snake_Direction.RIGHT) {
+            currentDirection = snake_Direction.LEFT;
+          } else if (event.isKeyPressed(LogicalKeyboardKey.arrowRight)&& currentDirection != snake_Direction.LEFT) {
+            currentDirection = snake_Direction.RIGHT;
+          }
+        },
+        child: SizedBox(
+          width: screenWidth > 428 ? 428 : screenWidth,
+          child: Column(
+            children: [
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                         const Text('Current Score'),
+                          Text(
+                            currentscore.toString(),
+                            style: const TextStyle(fontSize: 36),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  Text("highscores"),
-                ],
+                    ),
+                    // Text("highscores"),
+
+                    Expanded(
+                      child: gameHasstarted
+                          ? Container()
+                          : FutureBuilder(
+                              future: letsgetdocid,
+                              builder: ((context, snapshot) {
+                                return ListView.builder(
+                                  itemCount: highscore_docid.length,
+                                  itemBuilder: ((context, index) {
+                                    return HighScoreTile(
+                                        documentId: highscore_docid[index]);
+                                  }),
+                                );
+                              }),
+                            ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              flex: 3,
-              child: GestureDetector(
-                onVerticalDragUpdate: (details) {
-                  if (details.delta.dy > 0 &&
-                      currentDirection != snake_Direction.UP) {
-                    currentDirection = snake_Direction.DOWN;
-                  } else if (details.delta.dy < 0 &&
-                      currentDirection != snake_Direction.DOWN) {
-                    currentDirection = snake_Direction.UP;
-                  }
-                },
-                onHorizontalDragUpdate: (details) {
-                  if (details.delta.dx > 0 &&
-                      currentDirection != snake_Direction.LEFT) {
-                    currentDirection = snake_Direction.RIGHT;
-                  } else if (details.delta.dx < 0 &&
-                      currentDirection != snake_Direction.RIGHT) {
-                    currentDirection = snake_Direction.LEFT;
-                  }
-                },
-                child: GridView.builder(
-                    itemCount: totalNumberofSqures,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: rowSize),
-                    itemBuilder: (context, index) {
-                      if (snakePosition.contains(index)) {
-                        return const SnakePixel();
-                      } else if (foodposition == index) {
-                        return const FoodPixel();
-                      } else {
-                        return const BlankPixel();
-                      }
-                    }),
+              Expanded(
+                flex: 3,
+                child: GestureDetector(
+                  onVerticalDragUpdate: (details) {
+                    if (details.delta.dy > 0 &&
+                        currentDirection != snake_Direction.UP) {
+                      currentDirection = snake_Direction.DOWN;
+                    } else if (details.delta.dy < 0 &&
+                        currentDirection != snake_Direction.DOWN) {
+                      currentDirection = snake_Direction.UP;
+                    }
+                  },
+                  onHorizontalDragUpdate: (details) {
+                    if (details.delta.dx > 0 &&
+                        currentDirection != snake_Direction.LEFT) {
+                      currentDirection = snake_Direction.RIGHT;
+                    } else if (details.delta.dx < 0 &&
+                        currentDirection != snake_Direction.RIGHT) {
+                      currentDirection = snake_Direction.LEFT;
+                    }
+                  },
+                  child: GridView.builder(
+                      itemCount: totalNumberofSqures,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: rowSize),
+                      itemBuilder: (context, index) {
+                        if (snakePosition.contains(index)) {
+                          return const SnakePixel();
+                        } else if (foodposition == index) {
+                          return const FoodPixel();
+                        } else {
+                          return const BlankPixel();
+                        }
+                      }),
+                ),
               ),
-            ),
-            Expanded(
-              child: Container(
-                child: Center(
-                  child: MaterialButton(
-                    child: Text("PLAY"),
-                    color: gameHasstarted ? Colors.grey : Colors.pink,
-                    onPressed: gameHasstarted ? () {} : startgame,
+              Expanded(
+                child: Container(
+                  child: Center(
+                    child: MaterialButton(
+                      child: Text("PLAY"),
+                      color: gameHasstarted ? Colors.grey : Colors.pink,
+                      onPressed: gameHasstarted ? () {} : startgame,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

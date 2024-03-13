@@ -14,7 +14,8 @@ class _BlankPixelState extends State<BlankPixel> {
       padding: const EdgeInsets.all(2.0),
       child: Container(
         decoration: BoxDecoration(
-            color: Color.fromARGB(255, 241, 10, 222),
+            color: Colors.grey.shade800,
+            // color: Color.fromARGB(255, 241, 10, 222),
             borderRadius: BorderRadius.circular(4)),
       ),
     );
