@@ -15,7 +15,6 @@ class _BlankPixelState extends State<BlankPixel> {
       child: Container(
         decoration: BoxDecoration(
             color: Colors.grey.shade800,
-            // color: Color.fromARGB(255, 241, 10, 222),
             borderRadius: BorderRadius.circular(4)),
       ),
     );
